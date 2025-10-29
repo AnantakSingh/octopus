@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Circle Burst — p5.js</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bitcount+Grid+Single:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: 'Bitcount Grid Single';
+        background: #000;
+      }
+      canvas {
+        display: block;
+      }
+      
+      /* Sticky instruction header */
+      #instructions {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: #f8f8f8;
+        color: #333;
+        font-size: 18px;
+        text-align: center;
+        padding: 10px 0;
+        box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+        z-index: 1000;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Instructions at the top -->
+    <div id="instructions">MOVE MOUSE</div>
+    <script>
+      let circles = [];
+let moveAngle = 0;
+let speed = 2;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  noStroke();
+  noFill();
+  angleMode(DEGREES);
+}
+
+function draw() {
+  background(20,20,80);
+  moveAngle += 1;
+  fill(255);
+  circle(mouseX, mouseY, 100);
+  
+  spawnCircles(mouseX, mouseY, moveAngle);
+
+  for (let i = circles.length - 1; i >= 0; i--) {
+    let c = circles[i];
+
+    c.x += c.x1;
+    c.y += c.y1;
+    c.size *= 0.98;
+
+    fill(200*sin(c.t),200*sin(c.t),20*sin(c.t),100);
+
+    ellipse(c.x, c.y, c.size);
+
+  }
+}
+
+function spawnCircles(x, y, angleChange) {
+  let size = 100;
+
+  for (let i = 0; i < 8; i++) {
+    let currentAngle = angleChange + i * 45;
+    let x1 = sin(currentAngle)*speed;
+    let y1 = cos(currentAngle)*speed;
+
+    circles.push({
+      x: x,
+      y: y,
+      x1: x1,
+      y1: y1,
+      size: size,
+      t: currentAngle,
+    });
+  }
+} 
+    </script>
+  </body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Circle Burst — p5.js</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bitcount+Grid+Single:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: 'Bitcount Grid Single';
+        background: #000;
+      }
+      canvas {
+        display: block;
+      }
+      
+      /* Sticky instruction header */
+      #instructions {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: #f8f8f8;
+        color: #333;
+        font-size: 18px;
+        text-align: center;
+        padding: 10px 0;
+        box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+        z-index: 1000;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Instructions at the top -->
+    <div id="instructions">PRESS AND MOVE MOUSE</div>
+    <script>
+      let circles = [];
+let whiteCircles = []; 
+let moveAngle = 0;
+let speed = 3;
+let dynamicMode = true; 
+let growingMode = false; https://editor.p5js.org/anantakunofficial/sketches
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  noStroke();
+  angleMode(DEGREES);
+}
+
+function draw() {
+  background(10, 10, 60);
+  moveAngle += 1;
+
+  spawnWhiteCircles();
+
+  for (let i = whiteCircles.length - 1; i >= 0; i--) {
+    let wc = whiteCircles[i];
+
+    if (growingMode) {
+      wc.size += wc.growthRate;
+      if (wc.size > 40) {
+        whiteCircles.splice(i, 1); 
+        continue;
+      }
+    } else {
+      wc.x += wc.vx;
+      wc.y += wc.vy;
+      wc.vx += random(-0.01, 0.01);
+      wc.vy += random(-0.01, 0.01);
+
+      wc.alpha -= 0.3; 
+      if (wc.alpha <= 0) {
+        whiteCircles.splice(i, 1);
+        continue;
+      }
+    }
+
+    fill(255, 255, 255, wc.alpha);
+    circle(wc.x, wc.y, wc.size);
+  }
+
+  fill(255);
+  circle(mouseX, mouseY, 50);
+
+  if (dynamicMode) {
+    spawnFixedCircles(mouseX, mouseY);
+  } else {
+    
+    spawnRotatingCircles(mouseX, mouseY, moveAngle);
+  }
+
+  for (let i = circles.length - 1; i >= 0; i--) {
+    let c = circles[i];
+    c.x += c.vx;
+    c.y += c.vy;
+    c.size *= 0.98;
+
+    fill(c.col);
+    ellipse(c.x, c.y, c.size);
+
+    if (c.size < 10) circles.splice(i, 1);
+  }
+}
+
+function spawnRotatingCircles(x, y, angleChange) {
+  let size = 50;
+  for (let i = 0; i < 8; i++) {
+    let currentAngle = angleChange + i * 45;
+    let vx = sin(currentAngle) * 5;
+    let vy = cos(currentAngle) * 5;
+    circles.push({
+      x: x,
+      y: y,
+      vx: vx,
+      vy: vy,
+      size: size,
+      t: currentAngle,
+      col: randomWarmColor(),
+    });
+  }
+}
+
+function spawnFixedCircles(x, y) {
+  let dirs = [-1, 0, 1];
+  for (let dx of dirs) {
+    for (let dy of dirs) {
+      if (dx !== 0 || dy !== 0) {
+        circles.push({
+          x: x,
+          y: y,
+          vx: dx * speed,
+          vy: dy * speed,
+          size: 50,
+          t: random(360),
+          col: randomWarmColor(),
+        });
+      }
+    }
+  }
+}
+
+function spawnWhiteCircles() {
+  if (random(1) < 0.4 ) {
+    whiteCircles.push({
+      x: random(width),
+      y: random(height),
+      size: random(1, 10),
+      alpha: random(80, 200),
+      vx: random(-0.01, 0.01),
+      vy: random(-0.01, 0.01),
+      growthRate: random(0.01, 0.2),
+    });
+  }
+}
+
+function randomWarmColor() {
+  const palette = [
+    color(255, 200, 0, 180),
+    color(255, 100, 0, 180),
+    color(255, 0, 50, 180),
+    color(255, 50, 150, 180),
+    color(255, 80, 20, 180),
+  ];
+  return random(palette);
+}
+
+function mousePressed() {
+
+  dynamicMode = !dynamicMode;
+
+  growingMode = true;
+
+  for (let wc of whiteCircles) {
+    wc.growthRate = random(0.3, 1.5);
+  }
+}
+
+function mouseReleased() {
+  dynamicMode = !dynamicMode;
+  growingMode = false;
+}
+    </script>
+  </body>
+</html>
