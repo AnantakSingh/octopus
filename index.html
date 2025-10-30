@@ -119,13 +119,13 @@ let cardW = 120, cardH = 170;
 let cardfan = 0.6;
 let topIndex;
 let currentCard = null;
-let anim = null;
+let movement = null;
 let busy = false;
 let wins = 0;
 let unlockedCount = 0;
 const maxUnlock = 3;
 const thumbs = [];
-let animCallback = null;
+let moving = null;
 
 let backImg;
 
@@ -153,12 +153,8 @@ function setup() {
   shuffle(deck, true);
   topIndex = deck.length - 1;
 
-  anim = {
-    type: 'initialMove',
-    progress: 0,
-    duration: 1000,
-    startTime: millis(),
-  };
+  currentCard = deck.pop();
+  topIndex = deck.length - 1;
 
   document.getElementById('hB').onclick = () => buttonPressed('higher');
   document.getElementById('lB').onclick = () => buttonPressed('lower');
@@ -190,7 +186,7 @@ function draw() {
     pop();
   }
 
-  if (anim) handleAnimation();
+  if (movement) animaTION();
 }
 
 function drawCardBack(x, y) {
@@ -206,7 +202,7 @@ function drawCardBack(x, y) {
 function drawCardFace(card, x, y, scaleX = 1) {
   push();
   translate(x, y);
-  scale(scaleX, 1); // used during flip animations
+  scale(scaleX, 1); // for animations
   rectMode(CENTER);
 
   //Card Bg
@@ -252,70 +248,24 @@ function buildDeck() {
   }
 }
 
-// Fisher-Yates shuffle algorithm for mixing the deck only once at initialization
-function shuffle(array, mutate = false) {
-  let arr;
-
-  if (mutate) {
-    arr = array; // modify the original array
-  } else {
-    arr = array.slice(); // make a copy to shuffle
-  }
-
+// Fisher-Yates shuffle algorithm?
+function shuffle(array) {
+  let arr = array;
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-
-  if (!mutate) {
-    return arr; 
-  }
 }
 
 
-function handleAnimation(){
+function animaTION() {
   const now = millis();
-
-  if (anim.type === 'initialMove') {
-    const t = (now - anim.startTime) / anim.duration;
-    const drawX = lerp(deckX, deckX - 200);
-    push(); translate(drawX, deckY); drawCardBack(0, 0); pop();
-    if (t >= 1) {
-      anim = {type:'flipIn', startTime: now, duration: 600};
-      currentCard = deck.pop();
-      topIndex = deck.length - 1;
-    }
-
-  } 
-  
-  else if (anim.type === 'flipIn') {
-  const t = (now - anim.startTime) / anim.duration;
-  const c = constrain(t, 0, 1);
-
-  // Smoothly scale X from 1 → 0 → 1 (no midpoint check)
-  let scaleX = abs(map(c, 0, 1, -1, 1));
-
-  push();
-  translate(deckX - 220, deckY);
-
-  // Switch from back to face when scale is very small
-    if (c < 0.5) {
-      drawCardBack(0, 0);
-    } else {
-      drawCardFace(currentCard, 0, 0, scaleX);
-    }
-
-  pop();
-  if (c >= 1) anim = null;
-  }
-  
-  else if (anim.type === 'flipNext') {
-  const { startPos, endPos, cardObj, startTime, duration } = anim;
+  const { startPos, endPos, cardObj, startTime, duration } = movement;
   const t = (now - startTime) / duration;
   const c = constrain(t, 0, 1);
 
   const mx = lerp(startPos.x, endPos.x, c);
-  const my = lerp(startPos.y, endPos.y, c) - 20 * sin(PI * c);
+  const my = lerp(startPos.y, endPos.y, c);
 
   let scaleX;
   if (c < 0.5) {
@@ -326,32 +276,20 @@ function handleAnimation(){
 
   push();
   translate(mx, my);
-
-  // draw the card back or face based on c
-  if (c < 0.5) {
-    drawCardBack(0, 0);
-  } else {
-    drawCardFace(cardObj, 0, 0, scaleX);
-  }
-
+  if (c < 0.5) drawCardBack(0, 0);
+  else drawCardFace(cardObj, 0, 0, scaleX);
   pop();
 
   if (c >= 1) {
     currentCard = cardObj;
-    anim = null;
+    movement = null;
     busy = false;
-    if (animCallback) {
-      animCallback();
-      animCallback = null;
-    }
-  }
   }
 }
 
 function buttonPressed(choice) {
 
   if (!currentCard) return;
-  if (deck.length === 0) { restartGame(); return; }
 
   const nextCard = deck.pop();
   topIndex = deck.length - 1;
@@ -361,9 +299,8 @@ function buttonPressed(choice) {
 
   const startPos = {x: deckX, y: deckY};
   const endPos = {x: deckX - 200, y: deckY};
-  anim = {type:'flipNext', startPos, endPos, cardObj: nextCard, startTime: millis(), duration: 700};
-
-  animCallback = () => gameLogic(choice, prevCard, nextCard);
+  movement = {startPos: { x: deckX, y: deckY },endPos: { x: deckX - 200, y: deckY },cardObj: nextCard,startTime: millis(),duration: 700};
+  gameLogic(choice, prevCard, nextCard);
 }
 
 function gameLogic(choice, oldCard, newCard) {
@@ -379,8 +316,6 @@ function gameLogic(choice, oldCard, newCard) {
     wins = 0;
     lockAllSites();
   }
-
-  if (deck.length === 0) restartGame();
 }
 
 function unlockNext(){
@@ -399,15 +334,7 @@ function lockAllSites(){
   }
 }
 
-function restartGame(){
-  buildDeck();
-  shuffle(deck, true);
-  topIndex = deck.length - 1;
-  currentCard = null;
-  anim = {type:'initialMove', startTime: millis(), duration: 1000};
-  lockAllSites();
-}
-
 </script>
 </body>
 </html>
+
